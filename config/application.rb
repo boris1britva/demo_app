@@ -21,3 +21,21 @@ module DemoApp
     # config.i18n.default_locale = :de
   end
 end
+
+def secrets #:nodoc:
+  @secrets ||= begin
+    secrets = ActiveSupport::OrderedOptions.new
+    yaml = config.paths["config/secrets"].first
+    if File.exist?(yaml)
+      require "erb"
+      all_secrets = YAML.load(ERB.new(IO.read(yaml)).result) || {}
+      env_secrets = all_secrets[Rails.env]
+      secrets.merge!(env_secrets.symbolize_keys) if env_secrets
+    end
+
+    # Fallback to config.secret_key_base if secrets.secret_key_base isn't set
+    secrets.secret_key_base ||= config.secret_key_base
+
+    secrets
+  end
+end
